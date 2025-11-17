@@ -21,7 +21,8 @@
   "node-red": {
     "version": ">=2.0.0",
     "nodes": {
-      "stream-upload": "./nodes/stream-upload.js"
+      "stream-upload": "./nodes/stream-upload.js",
+      "pg-config": "./nodes/pg-config.js"
     }
   },
   "dependencies": {

@@ -1,0 +1,44 @@
+version: "3.7"
+
+services:
+  nodered:
+    image: nodered/node-red:3.1.9-18
+    extra_hosts:
+      - "api.yousolution.local:192.168.178.100"
+    volumes:
+      - ./data:/data
+    ports:
+      - "1880:1880"
+    environment:
+      NODE_ENV: "dev"
+      PGHOST: postgres
+      PGUSER: nodered
+      PGPASSWORD: noderedpass
+      PGDATABASE: filesdb
+      PGPORT: 5432
+    networks:
+      ys_tools_net:
+        aliases:
+          - nodered_659eafe98b4d8400110381f1
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: nodered
+      POSTGRES_PASSWORD: noderedpass
+      POSTGRES_DB: filesdb
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      ys_tools_net:
+        aliases:
+          - postgres
+
+networks:
+  ys_tools_net:
+    external: true
+
+volumes:
+  pg_data:

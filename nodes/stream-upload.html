@@ -1,0 +1,34 @@
+<script type="text/javascript">
+  RED.nodes.registerType('pg-stream-upload', {
+    category: 'storage',
+    color: '#A6BBCF',
+    defaults: {
+      name: { value: '' },
+      pgConfig: { value: '', type: 'pg-config' },
+    },
+    inputs: 0,
+    outputs: 1,
+    icon: 'db.png',
+    label: function () {
+      return this.name || 'Postgres Stream Upload';
+    },
+  });
+</script>
+
+<script type="text/x-red" data-template-name="pg-stream-upload">
+  <div class="form-row">
+      <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+      <input type="text" id="node-input-name">
+  </div>
+
+  <div class="form-row">
+      <label for="node-input-pgConfig"><i class="fa fa-database"></i> PostgreSQL</label>
+      <input type="text" id="node-input-pgConfig">
+  </div>
+</script>
+
+<script type="text/x-red" data-help-name="pg-stream-upload">
+  <p>
+  Nodo HTTP che riceve una richiesta multipart e carica il file in streaming in PostgreSQL tramite Large Objects.
+  </p>
+</script>

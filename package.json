@@ -22,7 +22,8 @@
     "version": ">=2.0.0",
     "nodes": {
       "stream-upload": "./nodes/stream-upload.js",
-      "pg-config": "./nodes/pg-config.js"
+      "pg-config": "./nodes/pg-config.js",
+      "pg-stream-upload": "./nodes/pg-stream-upload.js"
     }
   },
   "dependencies": {

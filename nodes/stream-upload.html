@@ -1,15 +1,14 @@
-<!-- stream-upload.html - MODIFICATO -->
+<!-- stream-upload.html -->
 <script type="text/javascript">
   RED.nodes.registerType('stream-upload', {
-    category: 'storage',
-    color: '#A6BBCF',
+    category: 'network',
+    color: '#a6bbcf',
     defaults: {
       name: { value: '' },
-      pgConfig: { value: '', type: 'pg-config', required: true }, // 🔥 LINK AL NODO CONFIG
     },
     inputs: 0,
     outputs: 1,
-    icon: 'db.png',
+    icon: 'font-awesome/fa-upload',
     label: function () {
       return this.name || 'Stream Upload';
     },
@@ -21,16 +20,19 @@
     <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
     <input type="text" id="node-input-name" placeholder="Name">
   </div>
-  <div class="form-row">
-    <label for="node-input-pgConfig"><i class="fa fa-database"></i> PostgreSQL</label>
-    <input type="text" id="node-input-pgConfig"> <!-- 🔥 SELECTOR -->
-  </div>
 </script>
 
 <script type="text/x-red" data-help-name="stream-upload">
   <p>
-    Endpoint HTTP per upload file in streaming verso PostgreSQL Large Objects.
+    Creates an HTTP endpoint to receive a file upload as a stream.
   </p>
-  <p><strong>Configurazione:</strong> Seleziona un nodo PostgreSQL Config</p>
-  <p><strong>Output:</strong> Messaggio con <code>msg.payload.oid</code> e metadati</p>
+  <p>This node handles multipart file uploads and forwards the file stream to the output.</p>
+  <p><strong>Endpoint:</strong> The node listens for POST requests on <code>/upload-stream</code>.</p>
+  <p><strong>Output:</strong>
+    <ul>
+      <li><code>msg.payload</code>: The file stream (a Readable stream).</li>
+      <li><code>msg.filename</code>: The name of the uploaded file.</li>
+      <li><code>msg.mimetype</code>: The MIME type of the file.</li>
+    </ul>
+  </p>
 </script>

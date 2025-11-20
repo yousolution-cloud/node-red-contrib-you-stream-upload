@@ -1,33 +1,49 @@
-// pg-stream-upload.js
 module.exports = function (RED) {
   const { Pool } = require('pg');
   const { LargeObjectManager } = require('pg-large-object');
   const { Readable } = require('stream');
 
+  // A simple, persistent cache for shared pools.
+  // Pools are created once per config and never destroyed during the Node-RED lifecycle.
+  // This is the most robust way to prevent race conditions on redeploy.
+  const sharedPools = {};
+
+  function getPool(configNode) {
+    const poolId = configNode.id;
+    if (!sharedPools[poolId]) {
+      RED.log.info(
+        `Creating new persistent shared PostgreSQL pool for config: ${poolId}`
+      );
+      // This is the corrected configuration, accessing credentials directly from the config node.
+      const newPool = new Pool({
+        host: configNode.host,
+        port: configNode.port,
+        user: configNode.user, // User from config
+        password: configNode.credentials.password, // Password from credentials
+        database: configNode.database,
+      });
+      newPool.on('error', (err) => {
+        RED.log.error(
+          `[pg-stream-upload] Shared pool error for ${poolId}: ${err.message}`
+        );
+      });
+      sharedPools[poolId] = newPool;
+    }
+    return sharedPools[poolId];
+  }
+
   function PgStreamUpload(config) {
     RED.nodes.createNode(this, config);
     const node = this;
 
-    // Get PostgreSQL configuration
     const pgConfigNode = RED.nodes.getNode(config.pgConfig);
     if (!pgConfigNode) {
       node.status({ fill: 'red', shape: 'ring', text: 'Missing PG config' });
-      node.error('Missing PostgreSQL configuration');
       return;
     }
 
-    const pool = new Pool({
-      host: pgConfigNode.host,
-      user: pgConfigNode.user,
-      password: pgConfigNode.credentials.password,
-      database: pgConfigNode.database,
-      port: pgConfigNode.port,
-    });
-
-    pool.on('error', (err) => {
-      node.error('Postgres connection pool error: ' + err.toString());
-      node.status({ fill: 'red', shape: 'ring', text: 'Pool Error' });
-    });
+    // This will now correctly create or reuse a stable pool.
+    const pool = getPool(pgConfigNode);
 
     node.on('input', async (msg, send, done) => {
       const fileStream = msg.payload;
@@ -44,12 +60,12 @@ module.exports = function (RED) {
       }
 
       node.status({ fill: 'blue', shape: 'dot', text: 'uploading' });
-
       let client;
       try {
+        // This call should no longer hang after a redeploy.
         client = await pool.connect();
       } catch (err) {
-        node.error('Failed to connect to PostgreSQL: ' + err.message, msg);
+        node.error('Failed to get client from pool: ' + err.message, msg);
         node.status({ fill: 'red', shape: 'ring', text: 'Connection failed' });
         if (done) {
           done(err);
@@ -57,37 +73,22 @@ module.exports = function (RED) {
         return;
       }
 
-      let oid = null;
       try {
         await client.query('BEGIN');
-
         const lom = new LargeObjectManager({ pg: client });
-        const [loid, pgStream] = await lom.createAndWritableStreamAsync();
-        oid = loid;
+        const [oid, pgStream] = await lom.createAndWritableStreamAsync();
 
-        // Pipe the file stream to the PostgreSQL large object stream
         fileStream.pipe(pgStream);
 
-        // Wait for the upload to complete
         await new Promise((resolve, reject) => {
           pgStream.on('finish', resolve);
           pgStream.on('error', reject);
-          fileStream.on('error', reject); // also handle errors from the source stream
+          fileStream.on('error', reject);
         });
 
         await client.query('COMMIT');
-
         node.status({ fill: 'green', shape: 'dot', text: 'upload complete' });
-
-        // Send the output message
-        send({
-          payload: {
-            oid: oid,
-            filename: filename,
-            mimetype: mimetype,
-          },
-        });
-
+        send({ payload: { oid, filename: filename, mimetype: mimetype } });
         if (done) {
           done();
         }
@@ -107,11 +108,10 @@ module.exports = function (RED) {
       }
     });
 
+    // The 'close' handler is intentionally left empty regarding the pool.
+    // The pool is shared and persistent across deploys.
     node.on('close', (done) => {
-      pool.end(() => {
-        node.log('PostgreSQL pool closed.');
-        done();
-      });
+      done();
     });
   }
 

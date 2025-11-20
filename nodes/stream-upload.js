@@ -1,4 +1,3 @@
-// stream-upload.js - MODIFICATO per essere agnostico e inviare lo stream
 module.exports = function (RED) {
   const Busboy = require('busboy');
 
@@ -6,37 +5,33 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config);
     const node = this;
 
-    const endpoint = '/upload-stream';
+    const method = 'post';
 
-    const postHandler = (req, res) => {
+    let endpoint = config.endpoint || '/upload-stream';
+    if (!endpoint.startsWith('/')) endpoint = '/' + endpoint;
+
+    // =======================
+    // 1. Register route like http in node
+    // =======================
+    node.handler = function (req, res) {
       const busboy = Busboy({ headers: req.headers });
 
       busboy.on('file', (fieldname, file, info) => {
-        const filename = info.filename || 'unknown_file';
-
-        // Invia un messaggio al flow di Node-RED.
-        // Il payload è lo stream del file stesso.
-        node.log(`Forwarding stream for file: ${filename}`);
         node.send({
           payload: file,
-          filename: filename,
+          filename: info.filename,
           mimetype: info.mimeType,
         });
       });
 
       busboy.on('finish', () => {
-        // Rispondi al client HTTP che lo stream è stato ricevuto
-        // e inoltrato con successo al flow.
         if (!res.headersSent) {
-          res.status(200).json({
-            status: 'ok',
-            message: 'Stream forwarded to Node-RED flow',
-          });
+          res.json({ status: 'ok' });
         }
       });
 
       busboy.on('error', (err) => {
-        node.error('Busboy error: ' + err.toString(), err);
+        node.error(err);
         if (!res.headersSent) {
           res.status(500).json({ error: err.message });
         }
@@ -45,14 +40,31 @@ module.exports = function (RED) {
       req.pipe(busboy);
     };
 
-    RED.httpNode.post(endpoint, postHandler);
+    // Register route in SAME WAY as http in
+    RED.httpNode[method](endpoint, node.handler);
+    node.log(`Registered route POST ${endpoint}`);
 
-    node.on('close', () => {
-      // L'endpoint viene rimosso automaticamente dalla logica di base di Node-RED,
-      // quindi non è necessario fare nulla di specifico qui per la pulizia.
+    // =======================
+    // 2. Cleanup identical to http in node
+    // =======================
+    node.on('close', function (done) {
+      const router = RED.httpNode._router.stack;
+
+      for (let i = 0; i < router.length; i++) {
+        const layer = router[i];
+
+        if (
+          layer.route &&
+          layer.route.path === endpoint &&
+          layer.route.methods[method]
+        ) {
+          router.splice(i, 1);
+          break;
+        }
+      }
+
+      done();
     });
-
-    node.log('Stream Upload in ascolto su: POST ' + endpoint);
   }
 
   RED.nodes.registerType('stream-upload', StreamUpload);

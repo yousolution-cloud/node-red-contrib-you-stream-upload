@@ -23,7 +23,8 @@
     "nodes": {
       "stream-upload": "./nodes/stream-upload.js",
       "pg-config": "./nodes/pg-config.js",
-      "pg-stream-upload": "./nodes/pg-stream-upload.js"
+      "pg-stream-upload": "./nodes/pg-stream-upload.js",
+      "file-stream-upload": "./nodes/file-stream-upload.js"
     }
   },
   "dependencies": {

@@ -28,45 +28,59 @@
 </script>
 
 <script type="text/x-red" data-help-name="pg-stream-upload">
-  <p>Uploads a file stream to PostgreSQL as a Large Object.</p>
-  <p>This node is designed to work with the <code>stream-upload</code> node or any other node that provides a readable stream in <code>msg.payload</code>.</p>
+    <p>A Node-RED node that uploads a file stream directly to a PostgreSQL database as a Large Object.</p>
+    <p>This node is typically used with the <code>stream-upload</code> node or any other node that provides a readable stream in <code>msg.payload</code>.</p>
+    <p>PostgreSQL Large Objects are ideal for storing files or binary data that might exceed the capacity of standard table columns.</p>
 
-  <h3>Inputs</h3>
-  <dl class="message-properties">
-      <dt>payload
-          <span class="property-type">stream</span>
-      </dt>
-      <dd>The readable stream of the file to be uploaded.</dd>
-      <dt>filename
-          <span class="property-type">string</span>
-      </dt>
-      <dd>(Optional) The name of the file.</dd>
-      <dt>mimetype
-          <span class="property-type">string</span>
-      </dt>
-      <dd>(Optional) The MIME type of the file.</dd>
-  </dl>
+    <h3>Configuration</h3>
+    <dl class=\"message-properties\">\
+        <dt>Name <span class=\"property-type\">string</span></dt>\
+        <dd>An optional name for the node displayed in the flow editor.</dd>\
+        <dt>PostgreSQL <span class=\"property-type\">pg-config</span></dt>\
+        <dd>The configuration node for your PostgreSQL database connection.</dd>\
+    </dl>
 
-  <h3>Outputs</h3>
-  <dl class="message-properties">
-      <dt>payload
-          <span class="property-type">object</span>
-      </dt>
-      <dd>An object containing the result of the upload.</dd>
-  </dl>
-  <h4>Payload Object</h4>
-  <dl class="message-properties">
-      <dt>oid
-          <span class="property-type">number</span>
-      </dt>
-      <dd>The Object ID (OID) of the created Large Object in PostgreSQL.</dd>
-      <dt>filename
-          <span class="property-type">string</span>
-      </dt>
-      <dd>The name of the file that was uploaded.</dd>
-      <dt>mimetype
-          <span class="property-type">string</span>
-      </dt>
-      <dd>The MIME type of the file.</dd>
-  </dl>
+    <h3>Inputs</h3>
+    <dl class=\"message-properties\">\
+        <dt>msg.payload <span class=\"property-type\">stream</span></dt>\
+        <dd>The readable stream of the file content to be uploaded to PostgreSQL.</dd>\
+        <dt>msg.filename <span class=\"property-type\">string</span></dt>\
+        <dd>(Optional) The original name of the file. This will be stored as part of the output metadata.</dd>\
+        <dt>msg.mimetype <span class=\"property-type\">string</span></dt>\
+        <dd>(Optional) The MIME type of the file. This will be stored as part of the output metadata.</dd>\
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class=\"message-properties\">\
+        <dt>msg.payload <span class=\"property-type\">object</span></dt>\
+        <dd>An object containing details about the uploaded Large Object.</dd>\
+        <dd>\
+            <ul>\
+                <li><code>oid</code> <span class=\"property-type\">number</span>: The Object ID (OID) of the created Large Object in PostgreSQL. This OID is crucial for retrieving or managing the object later.</li>\
+                <li><code>filename</code> <span class=\"property-type\">string</span>: The original filename as received in <code>msg.filename</code>, if provided.</li>\
+                <li><code>mimetype</code> <span class=\"property-type\">string</span>: The MIME type of the file as received in <code>msg.mimetype</code>, if provided.</li>\
+            </ul>\
+        </dd>\
+        <dt>msg.topic <span class=\"property-type\">string</span></dt>\
+        <dd>Passes through the <code>msg.topic</code> from the input message, if it exists.</dd>\
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node utilizes PostgreSQL's Large Object facility, which is specifically designed for handling large binary data. Each uploaded file is assigned a unique Object ID (OID) within the database, which is returned in the output message. This OID can then be used with other PostgreSQL nodes to read, update, or delete the Large Object.</p>
+    <p>Ensure your PostgreSQL user has the necessary permissions to create Large Objects.</p>
+
+    <h3>Example Usage</h3>
+    <p>A basic flow to upload an incoming file stream to PostgreSQL:</p>
+    <pre>\
+  [{\"id\":\"example-flow-pg\",\"type\":\"tab\",\"label\":\"PostgreSQL Upload Example\",\"disabled\":false,\"info\":\"\"},\
+   {\"id\":\"http-in-pg\",\"type\":\"http in\",\"name\":\"Upload Endpoint\",\"url\":\"/upload-to-pg\",\"method\":\"POST\",\"upload\":true,\"swaggerDoc\":\"\",\"x\":150,\"y\":100,\"wires\":[[\"pg-upload-node\"]]},\
+   {\"id\":\"pg-upload-node\",\"type\":\"pg-stream-upload\",\"name\":\"Upload to PostgreSQL\",\"pgConfig\":\"[YOUR_PG_CONFIG_NODE_ID]\",\"x\":400,\"y\":100,\"wires\":[[\"debug-node-pg\"]]},\
+   {\"id\":\"debug-node-pg\",\"type\":\"debug\",\"name\":\"Uploaded LO Info\",\"topic\":\"\",\"console\":\"false\",\"tostatus\":\"false\",\"complete\":\"payload\",\"targetType\":\"msg\",\"statusVal\":\"\",\"statusType\":\"auto\",\"x\":650,\"y\":100,\"wires\":[]}]\
+    </pre>
+    <p>In this example:</p>
+    <ul>\
+        <li>An <code>HTTP In</code> node (configured for POST requests at <code>/upload-to-pg</code> with \"Accept File Uploads\" enabled) receives an incoming file.</li>\
+        <li>The <code>pg-stream-upload</code> node, configured with your PostgreSQL database, uploads the file stream as a Large Object.</li>\
+        <li>A <code>Debug</code> node displays the output message, including the OID and other metadata of the uploaded Large Object.</li>\
+    </ul>
 </script>

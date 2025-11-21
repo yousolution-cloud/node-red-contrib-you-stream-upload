@@ -28,26 +28,46 @@
 </script>
 
 <script type="text/x-red" data-help-name="stream-upload">
-  <p>Creates an HTTP endpoint to accept file uploads as a stream.</p>
-  <h3>Details</h3>
-  <p>
-      This node sets up an HTTP POST endpoint to handle <code>multipart/form-data</code> uploads.
-      When a file is uploaded to the configured endpoint, the node sends a message containing the file's readable stream.
-  </p>
-  <p>The endpoint URL is configurable in the node's properties.</p>
+  <p>A Node-RED node that creates an HTTP endpoint specifically designed for streaming file uploads.</p>
+  <p>This node efficiently handles incoming <code>POST</code> requests with a <code>multipart/form-data</code> body on the configured endpoint URL, extracting the file stream and associated metadata.</p>
+  <p>It is typically used as the entry point for file upload workflows, passing the stream to subsequent nodes for processing (e.g., saving to disk, uploading to a database, or sending to cloud storage).</p>
+
+  <h3>Configuration</h3>
+  <dl class="message-properties">
+      <dt>Name <span class="property-type">string</span></dt>
+      <dd>An optional name for the node displayed in the flow editor.</dd>
+      <dt>Endpoint <span class="property-type">string</span></dt>
+      <dd>The HTTP URL path where this node will listen for incoming file uploads. This URL must start with a leading slash (e.g., <code>/upload-stream</code>, <code>/api/files</code>). This path should be unique within your Node-RED instance to avoid conflicts.</dd>
+  </dl>
+
   <h3>Outputs</h3>
   <dl class="message-properties">
-      <dt>payload
-          <span class="property-type">stream</span>
-      </dt>
-      <dd>The file stream.</dd>
-      <dt>filename
-          <span class="property-type">string</span>
-      </dt>
-      <dd>The name of the file.</dd>
-      <dt>mimetype
-          <span class="property-type">string</span>
-      </dt>
-      <dd>The MIME type of the file.</dd>
+      <dt>msg.payload <span class="property-type">stream</span></dt>
+      <dd>A readable stream of the uploaded file's content. This stream can be piped directly into other nodes that accept streams (e.g., <code>file-stream-upload</code>, <code>pg-stream-upload</code>).</dd>
+      <dt>msg.filename <span class="property-type">string</span></dt>
+      <dd>The original name of the uploaded file, as provided by the client (e.g., <code>document.pdf</code>).</dd>
+      <dt>msg.mimetype <span class="property-type">string</span></dt>
+      <dd>The MIME type of the uploaded file, as detected from the HTTP request (e.g., <code>application/pdf</code>, <code>image/jpeg</code>).</dd>
+      <dt>msg.topic <span class="property-type">string</span></dt>
+      <dd>Defaults to the configured endpoint URL, providing context about where the upload originated.</dd>
   </dl>
+
+  <h3>Details</h3>
+  <p>Upon receiving a file upload, this node processes the incoming HTTP request and automatically sends an appropriate HTTP response back to the client. The file content is then forwarded as a readable stream in <code>msg.payload</code> to the next node(s) in the flow.</p>
+  <p>Errors during the upload process (e.g., malformed request, network issues) will cause the node to raise an error, which can be gracefully handled by attaching a <code>Catch</code> node to this <code>stream-upload</code> node.</p>
+
+  <h3>Example Usage</h3>
+  <p>A simple flow demonstrating how to receive an uploaded file and save it to the local filesystem:</p>
+  <pre>
+  [{"id":"example-flow-stream-upload","type":"tab","label":"Stream Upload Example","disabled":false,"info":""},
+   {"id":"stream-upload-node","type":"stream-upload","name":"File Upload Endpoint","endpoint":"/upload-file","x":150,"y":100,"wires":[["file-save-node"]]},
+   {"id":"file-save-node","type":"file-stream-upload","name":"Save to Disk","directory":"/tmp/uploads","x":400,"y":100,"wires":[["debug-output"]]},
+   {"id":"debug-output","type":"debug","name":"Uploaded File Info","topic":"","console":"false","tostatus":"false","complete":"payload","targetType":"msg","statusVal":"","statusType":"auto","x":650,"y":100,"wires":[]}]
+  </pre>
+  <p>In this example:</p>
+  <ul>
+      <li>The <code>stream-upload</code> node listens for file uploads at <code>/upload-file</code>.</li>
+      <li>An incoming file is passed as a stream to the <code>file-stream-upload</code> node, which saves it to the <code>/tmp/uploads</code> directory.</li>
+      <li>Finally, a <code>Debug</code> node displays the details of the saved file (path, new filename, original filename).</li>
+  </ul>
 </script>

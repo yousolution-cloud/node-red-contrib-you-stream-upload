@@ -17,55 +17,67 @@
 </script>
 
 <script type="text/x-red" data-template-name="file-stream-upload">
-    <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
-    </div>
-    <div class="form-row">
-        <label for="node-input-directory"><i class="fa fa-folder"></i> Directory</label>
-        <input type="text" id="node-input-directory" placeholder="/data/upload-stream">
-    </div>
+  <div class="form-row">
+      <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+      <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+  <div class="form-row">
+      <label for="node-input-directory"><i class="fa fa-folder"></i> Directory</label>
+      <input type="text" id="node-input-directory" placeholder="/data/upload-stream">
+  </div>
 </script>
 
 <script type="text/x-red" data-help-name="file-stream-upload">
-    <p>Saves a file stream to a specified directory on the local filesystem.</p>
-    <p>This node is designed to work with the <code>stream-upload</code> node or any other node that provides a readable stream in <code>msg.payload</code>.</p>
+      <p>A Node-RED node that saves a file stream to a specified directory on the local filesystem.</p>
+      <p>It is typically used in conjunction with the <code>stream-upload</code> node or any other node that provides a readable stream in <code>msg.payload</code>.</p>
+      <p>This node ensures the destination directory exists before writing. To prevent filename collisions, it generates a unique filename by prepending a UUID to the original filename.</p>
 
-    <h3>Inputs</h3>
-    <dl class="message-properties">
-        <dt>payload
-            <span class="property-type">stream</span>
-        </dt>
-        <dd>The readable stream of the file to be saved.</dd>
-        <dt>filename
-            <span class="property-type">string</span>
-        </dt>
-        <dd>(Optional) The original name of the file. Used to create the new, unique filename.</dd>
-    </dl>
+      <h3>Configuration</h3>
+      <dl class="message-properties">
+          <dt>Name <span class="property-type">string</span></dt>
+          <dd>An optional name for the node displayed in the flow editor.</dd>
+          <dt>Directory <span class="property-type">string</span></dt>
+          <dd>The absolute path to the directory where files will be saved. Defaults to <code>/data/upload-stream</code>. The directory will be created if it does not exist.</dd>
+      </dl>
 
-    <h3>Outputs</h3>
-    <dl class="message-properties">
-        <dt>payload
-            <span class="property-type">object</span>
-        </dt>
-        <dd>An object containing details about the saved file.</dd>
-    </dl>
-    <h4>Payload Object</h4>
-    <dl class="message-properties">
-        <dt>path
-            <span class="property-type">string</span>
-        </dt>
-        <dd>The full absolute path to the newly saved file.</dd>
-        <dt>filename
-            <span class="property-type">string</span>
-        </dt>
-        <dd>The new, unique filename (including a UUID) of the saved file.</dd>
-        <dt>originalFilename
-            <span class="property-type">string</span>
-        </dt>
-        <dd>The original filename as received in the input message.</dd>
-    </dl>
+      <h3>Inputs</h3>
+      <dl class="message-properties">
+          <dt>msg.payload <span class="property-type">stream</span></dt>
+          <dd>The readable stream of the file content to be saved.</dd>
+          <dt>msg.filename <span class="property-type">string</span></dt>
+          <dd>(Optional) The original name of the file. If provided, this name will be used as a base to generate a unique filename for the saved file (e.g., <code>&lt;UUID&gt;_originalFilename.ext</code>).</dd>
+      </dl>
 
-    <h3>Details</h3>
-    <p>The node ensures the destination directory exists before writing. To prevent filename collisions, it generates a unique filename by prepending a UUID to the original filename.</p>
+      <h3>Outputs</h3>
+      <dl class="message-properties">
+          <dt>msg.payload <span class="property-type">object</span></dt>
+          <dd>An object containing details about the newly saved file.</dd>
+          <dd>
+              <ul>
+                  <li><code>path</code> <span class="property-type">string</span>: The full absolute path to the newly saved file.</li>
+                  <li><code>filename</code> <span class="property-type">string</span>: The new, unique filename (including a UUID) of the saved file.</li>
+                  <li><code>originalFilename</code> <span class="property-type">string</span>: The original filename as received in <code>msg.filename</code>, if provided.</li>
+              </ul>
+          </dd>
+          <dt>msg.topic <span class="property-type">string</span></dt>
+          <dd>Passes through the <code>msg.topic</code> from the input message, if it exists.</dd>
+      </dl>
+
+      <h3>Details</h3>
+      <p>This node provides a robust way to save incoming file streams. It automatically handles directory creation and ensures unique filenames by appending a UUID, preventing overwrites and conflicts.</p>
+
+      <h3>Example Usage</h3>
+      <p>A simple flow to save an uploaded file:</p>
+      <pre>
+  [{"id":"example-flow","type":"tab","label":"File Stream Upload Example","disabled":false,"info":""},
+   {"id":"http-in","type":"http in","name":"Upload Endpoint","url":"/upload","method":"POST","upload":true,"swaggerDoc":"","x":150,"y":100,"wires":[["file-upload-node"]]},
+   {"id":"file-upload-node","type":"file-stream-upload","name":"Save Uploaded File","directory":"/data/my_uploads","x":400,"y":100,"wires":[["debug-node"]]},
+   {"id":"debug-node","type":"debug","name":"Saved File Info","topic":"","console":"false","tostatus":"false","complete":"payload","targetType":"msg","statusVal":"","statusType":"auto","x":650,"y":100,"wires":[]}]
+      </pre>
+      <p>In this example:</p>
+      <ul>
+          <li>An <code>HTTP In</code> node configured for POST requests at <code>/upload</code> with "Accept File Uploads" enabled receives an incoming file.</li>
+          <li>The <code>file-stream-upload</code> node saves the received file stream to the specified directory.</li>
+          <li>A <code>Debug</code> node displays the output message containing details about the saved file.</li>
+      </ul>
 </script>

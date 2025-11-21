@@ -44,3 +44,32 @@
     <input type="password" id="node-config-input-password" placeholder="noderedpass">
   </div>
 </script>
+
+<script type="text/x-red" data-help-name="pg-config">
+  <p>A configuration node for establishing a connection to a PostgreSQL database. This node centralizes connection settings, allowing multiple PostgreSQL-related nodes to share the same database configuration.</p>
+
+  <h3>Configuration</h3>
+  <dl class="message-properties">
+      <dt>Name <span class="property-type">string</span></dt>
+      <dd>An optional name for this configuration node, displayed in the flow editor. If not provided, the label will be dynamically generated from the host, port, and database.</dd>
+
+      <dt>Host <span class="property-type">string</span></dt>
+      <dd>The hostname or IP address of the PostgreSQL server. Defaults to <code>postgres</code> (useful in Docker environments).</dd>
+
+      <dt>Port <span class="property-type">number</span></dt>
+      <dd>The port number on which the PostgreSQL server is listening. Defaults to <code>5432</code>.</dd>
+
+      <dt>Database <span class="property-type">string</span></dt>
+      <dd>The name of the database to connect to. Defaults to <code>filesdb</code>.</dd>
+
+      <dt>User <span class="property-type">string</span></dt>
+      <dd>The username for authenticating with the PostgreSQL database.</dd>
+
+      <dt>Password <span class="property-type">password</span></dt>
+      <dd>The password for the specified user. This is stored securely by Node-RED's credential system.</dd>
+  </dl>
+
+  <h3>Details</h3>
+  <p>This config node manages the connection to your PostgreSQL instance. It handles connection pooling internally, ensuring efficient and robust communication with the database.</p>
+  <p>For security, ensure that the database user has only the necessary privileges for the operations performed by the nodes using this configuration (e.g., creating Large Objects for <code>pg-stream-upload</code>).</p>
+</script>

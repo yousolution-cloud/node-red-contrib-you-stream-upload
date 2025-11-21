@@ -1,5 +1,7 @@
 module.exports = function (RED) {
   const Busboy = require('busboy');
+  const { PassThrough } = require('stream');
+  const { v4: uuidv4 } = require('uuid');
 
   function StreamUpload(config) {
     RED.nodes.createNode(this, config);
@@ -15,10 +17,26 @@ module.exports = function (RED) {
     // =======================
     node.handler = function (req, res) {
       const busboy = Busboy({ headers: req.headers });
+      const globalContext = node.context().global;
+
+      // Assicurati che la registry esista
+      let registry = globalContext.get('_YOU_STREAM_REGISTRY') || {};
+      globalContext.set('_YOU_STREAM_REGISTRY', registry);
 
       busboy.on('file', (fieldname, file, info) => {
+        const id = uuidv4();
+
+        const pass = new PassThrough();
+        file.pipe(pass);
+
+        // Salva lo stream nella registry globale
+        registry = globalContext.get('_YOU_STREAM_REGISTRY') || {};
+        registry[id] = pass;
+        globalContext.set('_YOU_STREAM_REGISTRY', registry);
+
+        // Invia il messaggio con l'ID dello stream
         node.send({
-          payload: file,
+          payload: id,
           filename: info.filename,
           mimetype: info.mimeType,
         });
@@ -40,7 +58,7 @@ module.exports = function (RED) {
       req.pipe(busboy);
     };
 
-    // Register route in SAME WAY as http in
+    // Register route in same way as http in
     RED.httpNode[method](endpoint, node.handler);
     node.log(`Registered route POST ${endpoint}`);
 

@@ -1,7 +1,6 @@
 module.exports = function (RED) {
   const fs = require('fs-extra');
   const path = require('path');
-  const { Readable } = require('stream');
   const { v4: uuidv4 } = require('uuid');
 
   function FileStreamUpload(config) {
@@ -10,7 +9,7 @@ module.exports = function (RED) {
 
     const uploadDir = config.directory || '/data/upload-stream';
 
-    // Assicura che la directory di upload esista.
+    // Assicura che la directory di upload esista
     fs.ensureDir(uploadDir)
       .then(() => {
         node.log(`Upload directory is ready at: ${uploadDir}`);
@@ -24,17 +23,25 @@ module.exports = function (RED) {
         });
       });
 
-    node.on('input', async (msg, send, done) => {
-      const fileStream = msg.payload;
-      const originalFilename = msg.filename || 'unknown_file';
+    // Recupera il context globale di Node-RED
+    const globalContext = node.context().global;
 
-      if (!(fileStream instanceof Readable)) {
-        if (done) {
-          done();
-        } // Acknowledge message, but do nothing.
+    node.on('input', async (msg, send, done) => {
+      const streamId = msg.payload;
+      const registry = globalContext.get('_YOU_STREAM_REGISTRY') || {};
+      const fileStream = registry[streamId];
+
+      if (!fileStream) {
+        node.error(`Stream not found for id: ${streamId}`, msg);
+        if (done) done(new Error(`Stream not found for id: ${streamId}`));
         return;
       }
 
+      // Rimuovi lo stream dalla registry
+      delete registry[streamId];
+      globalContext.set('_YOU_STREAM_REGISTRY', registry);
+
+      const originalFilename = msg.filename || 'unknown_file';
       const uniqueFilename = `${uuidv4()}-${originalFilename}`;
       const fullPath = path.join(uploadDir, uniqueFilename);
 
@@ -61,15 +68,11 @@ module.exports = function (RED) {
           },
         });
 
-        if (done) {
-          done();
-        }
+        if (done) done();
       } catch (err) {
         node.status({ fill: 'red', shape: 'ring', text: 'save failed' });
         node.error(`Failed to save stream to file: ${err.message}`, msg);
-        if (done) {
-          done(err);
-        }
+        if (done) done(err);
       }
     });
   }

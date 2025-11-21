@@ -3,9 +3,6 @@ module.exports = function (RED) {
   const { LargeObjectManager } = require('pg-large-object');
   const { Readable } = require('stream');
 
-  // A simple, persistent cache for shared pools.
-  // Pools are created once per config and never destroyed during the Node-RED lifecycle.
-  // This is the most robust way to prevent race conditions on redeploy.
   const sharedPools = {};
 
   function getPool(configNode) {
@@ -14,12 +11,11 @@ module.exports = function (RED) {
       RED.log.info(
         `Creating new persistent shared PostgreSQL pool for config: ${poolId}`
       );
-      // This is the corrected configuration, accessing credentials directly from the config node.
       const newPool = new Pool({
         host: configNode.host,
         port: configNode.port,
-        user: configNode.user, // User from config
-        password: configNode.credentials.password, // Password from credentials
+        user: configNode.user,
+        password: configNode.credentials.password,
         database: configNode.database,
       });
       newPool.on('error', (err) => {
@@ -42,34 +38,37 @@ module.exports = function (RED) {
       return;
     }
 
-    // This will now correctly create or reuse a stable pool.
     const pool = getPool(pgConfigNode);
+    const globalContext = node.context().global;
 
     node.on('input', async (msg, send, done) => {
-      const fileStream = msg.payload;
-      const filename = msg.filename || 'unknown_file';
-      const mimetype = msg.mimetype || 'application/octet-stream';
+      const streamId = msg.payload;
+      const registry = globalContext.get('_YOU_STREAM_REGISTRY') || {};
+      const fileStream = registry[streamId];
 
-      if (!(fileStream instanceof Readable)) {
-        const errMsg = 'Input payload is not a readable stream.';
+      if (!fileStream || !(fileStream instanceof Readable)) {
+        const errMsg = `Stream not found for id: ${streamId}`;
         node.error(errMsg, msg);
-        if (done) {
-          done(new Error(errMsg));
-        }
+        if (done) done(new Error(errMsg));
         return;
       }
 
+      // Rimuovi lo stream dalla registry
+      delete registry[streamId];
+      globalContext.set('_YOU_STREAM_REGISTRY', registry);
+
+      const filename = msg.filename || 'unknown_file';
+      const mimetype = msg.mimetype || 'application/octet-stream';
+
       node.status({ fill: 'blue', shape: 'dot', text: 'uploading' });
+
       let client;
       try {
-        // This call should no longer hang after a redeploy.
         client = await pool.connect();
       } catch (err) {
         node.error('Failed to get client from pool: ' + err.message, msg);
         node.status({ fill: 'red', shape: 'ring', text: 'Connection failed' });
-        if (done) {
-          done(err);
-        }
+        if (done) done(err);
         return;
       }
 
@@ -88,28 +87,20 @@ module.exports = function (RED) {
 
         await client.query('COMMIT');
         node.status({ fill: 'green', shape: 'dot', text: 'upload complete' });
-        send({ payload: { oid, filename: filename, mimetype: mimetype } });
-        if (done) {
-          done();
-        }
+        send({ payload: { oid, filename, mimetype } });
+        if (done) done();
       } catch (err) {
         node.status({ fill: 'red', shape: 'ring', text: 'upload failed' });
         node.error('Error during large object upload: ' + err.message, msg);
         if (client) {
           await client.query('ROLLBACK');
         }
-        if (done) {
-          done(err);
-        }
+        if (done) done(err);
       } finally {
-        if (client) {
-          client.release();
-        }
+        if (client) client.release();
       }
     });
 
-    // The 'close' handler is intentionally left empty regarding the pool.
-    // The pool is shared and persistent across deploys.
     node.on('close', (done) => {
       done();
     });

@@ -1,0 +1,64 @@
+<!-- file-direct-download.html -->
+<script type="text/javascript">
+    RED.nodes.registerType('file-direct-download', {
+        category: 'network',
+        color: '#A6BBCF',
+        defaults: {
+            name: { value: '' },
+            basePath: { value: '', required: true },
+            endpoint: { value: '/file-download', required: true },
+            contentType: { value: 'application/octet-stream' },
+        },
+        inputs: 0,
+        outputs: 0,
+        icon: 'file.png',
+        label: function () {
+            return this.name || `GET ${this.endpoint}/:filename`;
+        },
+    });
+</script>
+
+<script type="text/x-red" data-template-name="file-direct-download">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-basePath"><i class="fa fa-folder"></i> Base Path</label>
+    <input type="text" id="node-input-basePath" placeholder="/path/to/files">
+  </div>
+  <hr>
+  <div class="form-row">
+    <label for="node-input-endpoint"><i class="fa fa-globe"></i> Endpoint</label>
+    <input type="text" id="node-input-endpoint" placeholder="/file-download">
+  </div>
+  <div class="form-row">
+    <label for="node-input-contentType"><i class="fa fa-info-circle"></i> Content-Type</label>
+    <input type="text" id="node-input-contentType" placeholder="application/octet-stream">
+  </div>
+  <div class="form-tips">
+      <p>The final download URL will be <code>&lt;Node-RED URL&gt;&lt;Endpoint&gt;/&lt;Filename&gt;</code>.</p>
+      <p>Files will be served from the <b>Base Path</b> directory.</p>
+  </div>
+</script>
+
+<script type="text/x-red" data-help-name="file-direct-download">
+  <p>Creates a direct HTTP GET endpoint to download files from the local filesystem.</p>
+  <p>This node registers a web endpoint at the configured path with a dynamic parameter for the filename. When a client makes a GET request to this URL, the node streams the corresponding file from the configured <b>Base Path</b> directory.</p>
+
+  <h3>Configuration</h3>
+  <dl class="message-properties">
+      <dt>Base Path <span class="property-type">string</span></dt>
+      <dd><b>Required.</b> The absolute path to the directory containing the files to be served.</dd>
+      <dt>Endpoint <span class="property-type">string</span></dt>
+      <dd><b>Required.</b> The base URL path for the download endpoint. The node will append <code>/:filename</code> to this path. For example, if the endpoint is <code>/files</code>, the download URL for <code>doc.pdf</code> will be <code>/files/doc.pdf</code>.</dd>
+      <dt>Content-Type <span class="property-type">string</span></dt>
+      <dd>The MIME type of the file. Defaults to <code>application/octet-stream</code>.</dd>
+  </dl>
+
+  <h3>Inputs & Outputs</h3>
+  <p>This node does not have any inputs or outputs. It acts as a listener that responds directly to HTTP requests.</p>
+
+  <h3>Security</h3>
+  <p>This node prevents directory traversal attacks by disallowing path separators (<code>/</code> or <code>\</code>) and <code>..</code> in the requested filename. It only serves files directly located in the <b>Base Path</b>.</p>
+</script>

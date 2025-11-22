@@ -1,0 +1,84 @@
+<!-- pg-direct-download.html -->
+<script type="text/javascript">
+  RED.nodes.registerType('pg-direct-download', {
+    category: 'network',
+    color: '#A6BBCF',
+    defaults: {
+      name: { value: '' },
+      pgConfig: { value: '', type: 'pg-config', required: true },
+      endpoint: { value: '/pg-download', required: true },
+      filename: { value: '' },
+      contentType: { value: 'application/octet-stream' },
+    },
+    inputs: 0,
+    outputs: 0,
+    icon: 'db.png',
+    label: function () {
+      return this.name || `GET ${this.endpoint}/:oid`;
+    },
+  });
+</script>
+
+<script type="text/x-red" data-template-name="pg-direct-download">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-pgConfig"><i class="fa fa-database"></i> PostgreSQL</label>
+    <input type="text" id="node-input-pgConfig">
+  </div>
+  <hr>
+  <div class="form-row">
+    <label for="node-input-endpoint"><i class="fa fa-globe"></i> Endpoint</label>
+    <input type="text" id="node-input-endpoint" placeholder="/pg-download">
+  </div>
+  <div class="form-row">
+    <label for="node-input-filename"><i class="fa fa-file-o"></i> Filename</label>
+    <input type="text" id="node-input-filename" placeholder="e.g., document.pdf or oid-{oid}.bin">
+  </div>
+  <div class="form-row">
+    <label for="node-input-contentType"><i class="fa fa-info-circle"></i> Content-Type</label>
+    <input type="text" id="node-input-contentType" placeholder="application/octet-stream">
+  </div>
+  <div class="form-tips">
+      <p>The final download URL will be <code>&lt;Node-RED URL&gt;&lt;Endpoint&gt;/&lt;OID&gt;</code>.</p>
+      <p>For a dynamic filename based on the OID, you can use placeholders like <code>file-{oid}.dat</code> in the Filename field (this is a planned feature).</p>
+  </div>
+</script>
+
+<script type="text/x-red" data-help-name="pg-direct-download">
+  <p>Creates a direct HTTP GET endpoint to download a PostgreSQL Large Object stream.</p>
+  <p>This node registers a web endpoint at the configured path with a dynamic parameter for the Object ID (OID). When a client makes a GET request to this URL, the node connects to the database, retrieves the specified Large Object, and streams it directly to the client as a file download.</p>
+  <p>This provides a simple and efficient way to expose files stored in PostgreSQL for download without needing multiple nodes or intermediate steps.</p>
+
+  <h3>Configuration</h3>
+  <dl class="message-properties">
+      <dt>PostgreSQL <span class="property-type">pg-config</span></dt>
+      <dd><b>Required.</b> The PostgreSQL database connection configuration.</dd>
+      <dt>Endpoint <span class="property-type">string</span></dt>
+      <dd><b>Required.</b> The base URL path for the download endpoint. The node will append <code>/:oid</code> to this path. For example, if the endpoint is <code>/files</code>, the download URL will be <code>/files/12345</code>.</dd>
+      <dt>Filename <span class="property-type">string</span></dt>
+      <dd>The default filename that the browser will suggest for the downloaded file. If left blank, a generic name like <code>oid-12345.bin</code> will be used.</dd>
+      <dt>Content-Type <span class="property-type">string</span></dt>
+      <dd>The MIME type of the file. Defaults to <code>application/octet-stream</code>, which is suitable for generic binary files.</dd>
+  </dl>
+
+  <h3>Inputs & Outputs</h3>
+  <p>This node does not have any inputs or outputs. It acts as a listener that responds directly to HTTP requests.</p>
+
+  <h3>Details</h3>
+  <p>When a request is received at <code>&lt;endpoint&gt;/&lt;oid&gt;</code>:</p>
+  <ol>
+      <li>The node extracts the OID from the URL.</li>
+      <li>It connects to the PostgreSQL database and starts a transaction.</li>
+      <li>It opens a readable stream for the Large Object.</li>
+      <li>It sets the appropriate HTTP headers (<code>Content-Type</code>, <code>Content-Length</code>, <code>Content-Disposition</code>) and pipes the stream to the HTTP response.</li>
+      <li>The database transaction is automatically committed on a successful stream or rolled back on an error or if the client disconnects.</li>
+  </ol>
+  <p>If the requested OID does not exist, the node will return a <code>404 Not Found</code> error.</p>
+
+  <h3>Example Usage</h3>
+  <p>Once the node is configured and deployed with an Endpoint of <code>/pg-download</code>, you can download the Large Object with OID <code>54321</code> by simply navigating to the following URL in your browser or using a tool like <code>curl</code>:</p>
+  <pre>http://&lt;your-node-red-ip&gt;:1880/pg-download/54321</pre>
+</script>

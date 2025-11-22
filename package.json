@@ -22,9 +22,12 @@
     "version": ">=2.0.0",
     "nodes": {
       "stream-upload": "./nodes/stream-upload.js",
+      "stream-download": "./nodes/stream-download.js",
       "pg-config": "./nodes/pg-config.js",
       "pg-stream-upload": "./nodes/pg-stream-upload.js",
-      "file-stream-upload": "./nodes/file-stream-upload.js"
+      "pg-stream-download": "./nodes/pg-direct-download.js",
+      "file-stream-upload": "./nodes/file-stream-upload.js",
+      "file-direct-download": "./nodes/file-direct-download.js"
     }
   },
   "dependencies": {

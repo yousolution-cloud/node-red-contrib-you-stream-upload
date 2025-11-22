@@ -29,7 +29,7 @@
 
 <script type="text/x-red" data-help-name="stream-upload">
   <p>A Node-RED node that creates an HTTP endpoint specifically designed for streaming file uploads.</p>
-  <p>This node efficiently handles incoming <code>POST</code> requests with a <code>multipart/form-data</code> body on the configured endpoint URL, extracting the file stream and associated metadata.</p>
+  <p>This node efficiently handles incoming <code>POST</code> requests with a <code>multipart/form-data</code> body OR a raw binary body on the configured endpoint URL, extracting the file stream and associated metadata.</p>
   <p>It is typically used as the entry point for file upload workflows, passing the stream to subsequent nodes for processing (e.g., saving to disk, uploading to a database, or sending to cloud storage).</p>
 
   <h3>Configuration</h3>
@@ -50,7 +50,16 @@
       <dd>The MIME type of the uploaded file, as detected from the HTTP request (e.g., <code>application/pdf</code>, <code>image/jpeg</code>).</dd>
       <dt>msg.topic <span class="property-type">string</span></dt>
       <dd>Defaults to the configured endpoint URL, providing context about where the upload originated.</dd>
+      <dt>msg.fields <span class="property-type">object</span></dt>
+      <dd>For <code>multipart/form-data</code> requests, this object contains any text fields sent <b>before</b> the file.</dd>
   </dl>
+
+  <h3>Binary Uploads</h3>
+  <p>For raw binary uploads (e.g., <code>application/octet-stream</code>), the node treats the entire request body as the file. You can provide the filename using HTTP headers:</p>
+  <ul>
+      <li><code>Content-Disposition</code>: <code>attachment; filename="example.bin"</code></li>
+      <li><code>x-filename</code>: <code>example.bin</code> (Custom header)</li>
+  </ul>
 
   <h3>Details</h3>
   <p>Upon receiving a file upload, this node processes the incoming HTTP request and automatically sends an appropriate HTTP response back to the client. The file content is then forwarded as a readable stream in <code>msg.payload</code> to the next node(s) in the flow.</p>

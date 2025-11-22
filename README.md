@@ -1,4 +1,4 @@
-# @yousolution/node-red-contrib-you-upload-stream
+# @yousolution/node-red-contrib-you-stream-upload
 
 A collection of Node-RED nodes for handling file streams, including multipart uploads, filesystem operations, and PostgreSQL Large Objects.
 
@@ -7,7 +7,7 @@ A collection of Node-RED nodes for handling file streams, including multipart up
 Run the following command in your Node-RED user directory - typically `~/.node-red`:
 
 ```bash
-npm install @yousolution/node-red-contrib-you-upload-stream
+npm install @yousolution/node-red-contrib-you-stream-upload
 ```
 
 ## Nodes

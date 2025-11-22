@@ -1,5 +1,5 @@
 {
-  "name": "@yousolution/node-red-contrib-you-upload-stream",
+  "name": "@yousolution/node-red-contrib-you-stream-upload",
   "version": "1.0.0",
   "description": "Node-RED node that streams multipart uploads directly into PostgreSQL Large Objects",
   "license": "MIT",

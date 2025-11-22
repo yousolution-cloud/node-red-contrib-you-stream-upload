@@ -19,11 +19,23 @@ module.exports = function (RED) {
       const busboy = Busboy({ headers: req.headers });
       const globalContext = node.context().global;
 
+      const fields = {};
+
       // Assicurati che la registry esista
       let registry = globalContext.get('_YOU_STREAM_REGISTRY') || {};
       globalContext.set('_YOU_STREAM_REGISTRY', registry);
 
+      busboy.on('field', (fieldname, val) => {
+        fields[fieldname] = val;
+      });
+
       busboy.on('file', (fieldname, file, info) => {
+        const safeFieldname = fieldname || 'file';
+
+        if (Object.keys(fields).length === 0) {
+          node.warn('Received file before any fields. If you sent fields, they must be placed BEFORE the file in the multipart request to be included in the message.');
+        }
+
         const id = uuidv4();
 
         const pass = new PassThrough();
@@ -39,6 +51,7 @@ module.exports = function (RED) {
           payload: id,
           filename: info.filename,
           mimetype: info.mimeType,
+          fields: fields,
         });
       });
 

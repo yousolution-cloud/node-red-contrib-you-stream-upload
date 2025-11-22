@@ -20,6 +20,7 @@ Creates an HTTP endpoint specifically designed for streaming file uploads. It ha
 1.  Configure the **Endpoint** (e.g., `/upload-stream`).
 2.  Send a POST request with a file to that endpoint.
 3.  The node outputs `msg.payload` as a stream, which can be piped to other nodes.
+4.  **Fields**: Any additional text fields sent in the multipart request (must be sent **before** the file) are available in `msg.fields`.
 
 ### file-stream-upload
 

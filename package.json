@@ -1,6 +1,6 @@
 {
   "name": "@yousolution/node-red-contrib-you-stream-upload",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Node-RED nodes for streaming multipart uploads to PostgreSQL Large Objects and streaming downloads from PostgreSQL or filesystem directly to HTTP response.",
   "license": "MIT",
   "scripts": {

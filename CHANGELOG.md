@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.1] - 2025-11-28
+### Fixed
+- Optimized package size by ignoring `.tgz` files in `.npmignore`.
+
 ## [1.1.0] - 2025-11-28
 ### Added
 - New node `pg-response-stream`: Streams PostgreSQL Large Objects directly to HTTP response (bypassing `http response` node).

@@ -1,0 +1,74 @@
+<script type="text/javascript">
+    RED.nodes.registerType('pg-response-stream', {
+        category: 'network',
+        color: '#a6bbcf',
+        defaults: {
+            name: { value: "" },
+            pgConfig: { value: "", type: "pg-config", required: true },
+            oidProperty: { value: "payload", required: true },
+            filename: { value: "" },
+            contentType: { value: "" },
+            contentDisposition: { value: "attachment" }
+        },
+        inputs: 1,
+        outputs: 0,
+        icon: "font-awesome/fa-database",
+        align: "right",
+        label: function () {
+            return this.name || "pg response stream";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="pg-response-stream">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-pgConfig"><i class="fa fa-database"></i> Postgres Config</label>
+        <input type="text" id="node-input-pgConfig">
+    </div>
+    <div class="form-row">
+        <label for="node-input-oidProperty"><i class="fa fa-ellipsis-h"></i> OID Property</label>
+        <input type="text" id="node-input-oidProperty" placeholder="msg.payload">
+    </div>
+    <div class="form-row">
+        <label for="node-input-filename"><i class="fa fa-file"></i> Default Filename</label>
+        <input type="text" id="node-input-filename" placeholder="Leave empty to use msg.filename or generated">
+    </div>
+    <div class="form-row">
+        <label for="node-input-contentType"><i class="fa fa-file-code-o"></i> Content Type</label>
+        <input type="text" id="node-input-contentType" placeholder="e.g. application/pdf">
+    </div>
+    <div class="form-row">
+        <label for="node-input-contentDisposition"><i class="fa fa-download"></i> Disposition</label>
+        <select id="node-input-contentDisposition">
+            <option value="attachment">Attachment</option>
+            <option value="inline">Inline</option>
+        </select>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="pg-response-stream">
+    <p>Streams a PostgreSQL Large Object directly to the HTTP response.</p>
+    
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>res <span class="property-type">object</span></dt>
+        <dd>The response object from an <code>http in</code> node. Required.</dd>
+        
+        <dt>payload <span class="property-type">number</span></dt>
+        <dd>The OID (Object ID) of the Large Object to stream. Can be configured to use another property.</dd>
+        
+        <dt class="optional">filename <span class="property-type">string</span></dt>
+        <dd>The filename to use in the Content-Disposition header. Overrides the node configuration.</dd>
+
+        <dt class="optional">mimetype <span class="property-type">string</span></dt>
+        <dd>The Content-Type to use. Overrides the node configuration.</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node must be placed in a flow that starts with an <code>http in</code> node. It uses the <code>msg.res</code> object to stream data directly from the PostgreSQL database to the client.</p>
+    <p>It handles the database transaction and Large Object stream automatically.</p>
+</script>

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2025-11-28
+### Added
+- New node `pg-response-stream`: Streams PostgreSQL Large Objects directly to HTTP response (bypassing `http response` node).
+- New node `file-response-stream`: Streams local files directly to HTTP response.
+- Updated `package.json` metadata for better Node-RED library visibility.
+
 ## [1.0.0] - 2025-11-22
 
 ### Added

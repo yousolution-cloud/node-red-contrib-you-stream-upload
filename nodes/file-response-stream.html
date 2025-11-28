@@ -1,0 +1,65 @@
+<script type="text/javascript">
+    RED.nodes.registerType('file-response-stream', {
+        category: 'network',
+        color: '#a6bbcf',
+        defaults: {
+            name: { value: "" },
+            basePath: { value: "" },
+            filenameProperty: { value: "filename", required: true },
+            contentType: { value: "" },
+            contentDisposition: { value: "attachment" }
+        },
+        inputs: 1,
+        outputs: 0,
+        icon: "font-awesome/fa-file",
+        align: "right",
+        label: function () {
+            return this.name || "file response stream";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="file-response-stream">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-basePath"><i class="fa fa-folder"></i> Base Path</label>
+        <input type="text" id="node-input-basePath" placeholder="/path/to/files (optional)">
+    </div>
+    <div class="form-row">
+        <label for="node-input-filenameProperty"><i class="fa fa-ellipsis-h"></i> Filename Property</label>
+        <input type="text" id="node-input-filenameProperty" placeholder="msg.filename">
+    </div>
+    <div class="form-row">
+        <label for="node-input-contentType"><i class="fa fa-file-code-o"></i> Content Type</label>
+        <input type="text" id="node-input-contentType" placeholder="e.g. application/pdf">
+    </div>
+    <div class="form-row">
+        <label for="node-input-contentDisposition"><i class="fa fa-download"></i> Disposition</label>
+        <select id="node-input-contentDisposition">
+            <option value="attachment">Attachment</option>
+            <option value="inline">Inline</option>
+        </select>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="file-response-stream">
+    <p>Streams a file from the local filesystem directly to the HTTP response.</p>
+    
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>res <span class="property-type">object</span></dt>
+        <dd>The response object from an <code>http in</code> node. Required.</dd>
+        
+        <dt>filename <span class="property-type">string</span></dt>
+        <dd>The path to the file to stream. Can be configured to use another property. If Base Path is set, this is relative to it.</dd>
+
+        <dt class="optional">mimetype <span class="property-type">string</span></dt>
+        <dd>The Content-Type to use. Overrides the node configuration.</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node must be placed in a flow that starts with an <code>http in</code> node. It uses the <code>msg.res</code> object to stream the file directly to the client.</p>
+</script>

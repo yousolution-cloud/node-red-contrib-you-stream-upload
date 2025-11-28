@@ -1,7 +1,7 @@
 {
   "name": "@yousolution/node-red-contrib-you-stream-upload",
-  "version": "1.0.0",
-  "description": "Node-RED node that streams multipart uploads directly into PostgreSQL Large Objects",
+  "version": "1.1.0",
+  "description": "Node-RED nodes for streaming multipart uploads to PostgreSQL Large Objects and streaming downloads from PostgreSQL or filesystem directly to HTTP response.",
   "license": "MIT",
   "scripts": {
     "update1": "node scripts/update.js",
@@ -15,6 +15,12 @@
     "chunk",
     "upload",
     "stream",
+    "postgres",
+    "postgresql",
+    "large object",
+    "download",
+    "response",
+    "filesystem",
     "youSolution.Cloud"
   ],
   "author": "Andrea Trentin <andrea.trentin@yousolution.cloud>",
@@ -27,7 +33,9 @@
       "pg-stream-upload": "./nodes/pg-stream-upload.js",
       "pg-stream-download": "./nodes/pg-direct-download.js",
       "file-stream-upload": "./nodes/file-stream-upload.js",
-      "file-direct-download": "./nodes/file-direct-download.js"
+      "file-direct-download": "./nodes/file-direct-download.js",
+      "pg-response-stream": "./nodes/pg-response-stream.js",
+      "file-response-stream": "./nodes/file-response-stream.js"
     }
   },
   "dependencies": {
@@ -42,6 +50,10 @@
     "type": "git",
     "url": "https://github.com/yousolution-cloud/node-red-contrib-you-upload-stream.git"
   },
+  "bugs": {
+    "url": "https://github.com/yousolution-cloud/node-red-contrib-you-upload-stream/issues"
+  },
+  "homepage": "https://github.com/yousolution-cloud/node-red-contrib-you-upload-stream#readme",
   "publishConfig": {
     "access": "public"
   },
